@@ -236,10 +236,9 @@ class HabitatSimFisheyeSemanticSensor(HabitatSimSemanticSensor):
 
 
 def check_sim_obs(obs: Optional[ndarray], sensor: Sensor) -> None:
-    assert obs is not None, (
-        "Observation corresponding to {} not present in "
-        "simulator's observations".format(sensor.uuid)
-    )
+    assert (
+        obs is not None
+    ), f"Observation corresponding to {sensor.uuid} not present in simulator's observations"
 
 
 @registry.register_simulator(name="Sim-v0")
@@ -261,9 +260,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
             sensor_cfg = getattr(self.habitat_config, sensor_name)
             sensor_type = registry.get_sensor(sensor_cfg.TYPE)
 
-            assert sensor_type is not None, "invalid sensor type {}".format(
-                sensor_cfg.TYPE
-            )
+            assert sensor_type is not None, f"invalid sensor type {sensor_cfg.TYPE}"
             sim_sensors.append(sensor_type(sensor_cfg))
 
         self._sensor_suite = SensorSuite(sim_sensors)
@@ -379,8 +376,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
     def step(self, action: Union[str, int]) -> Observations:
         sim_obs = super().step(action)
         self._prev_sim_obs = sim_obs
-        observations = self._sensor_suite.get_observations(sim_obs)
-        return observations
+        return self._sensor_suite.get_observations(sim_obs)
 
     def render(self, mode: str = "rgb") -> Any:
         r"""
@@ -395,7 +391,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         observations = self._sensor_suite.get_observations(sim_obs)
 
         output = observations.get(mode)
-        assert output is not None, "mode {} sensor is not active".format(mode)
+        assert output is not None, f"mode {mode} sensor is not active"
         if not isinstance(output, np.ndarray):
             # If it is not a numpy array, it is a torch tensor
             # The function expects the result to be a numpy array
@@ -519,8 +515,7 @@ class HabitatSim(habitat_sim.Simulator, Simulator):
         if agent_id is None:
             agent_id = self.habitat_config.DEFAULT_AGENT_ID
         agent_name = self.habitat_config.AGENTS[agent_id]
-        agent_config = getattr(self.habitat_config, agent_name)
-        return agent_config
+        return getattr(self.habitat_config, agent_name)
 
     def get_agent_state(self, agent_id: int = 0) -> habitat_sim.AgentState:
         return self.get_agent(agent_id).get_state()

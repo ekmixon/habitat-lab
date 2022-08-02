@@ -52,15 +52,11 @@ def download(url, filename):
         else:
             downloaded = 0
             total = int(total)
-            for data in response.iter_content(
-                chunk_size=max(int(total / 1000), 1024 * 1024)
-            ):
+            for data in response.iter_content(chunk_size=max(total // 1000, 1024 * 1024)):
                 downloaded += len(data)
                 f.write(data)
                 done = int(50 * downloaded / total)
-                sys.stdout.write(
-                    "\r[{}{}]".format("█" * done, "." * (50 - done))
-                )
+                sys.stdout.write(f'\r[{"█" * done}{"." * (50 - done)}]')
                 sys.stdout.flush()
     sys.stdout.write("\n")
 
@@ -143,15 +139,14 @@ class BlindAgent(RandomAgent):
             return command
         if abs(angle_to_goal) < self.angle_th:
             command = HabitatSimActions.MOVE_FORWARD
+        elif (angle_to_goal > 0) and (angle_to_goal < pi):
+            command = HabitatSimActions.TURN_LEFT
+        elif angle_to_goal > pi:
+            command = HabitatSimActions.TURN_RIGHT
+        elif (angle_to_goal < 0) and (angle_to_goal > -pi):
+            command = HabitatSimActions.TURN_RIGHT
         else:
-            if (angle_to_goal > 0) and (angle_to_goal < pi):
-                command = HabitatSimActions.TURN_LEFT
-            elif angle_to_goal > pi:
-                command = HabitatSimActions.TURN_RIGHT
-            elif (angle_to_goal < 0) and (angle_to_goal > -pi):
-                command = HabitatSimActions.TURN_RIGHT
-            else:
-                command = HabitatSimActions.TURN_LEFT
+            command = HabitatSimActions.TURN_LEFT
 
         return command
 
@@ -163,10 +158,7 @@ class BlindAgent(RandomAgent):
         command = self.decide_what_to_do()
         random_action = random.randint(0, self.num_actions - 1)
         act_randomly = np.random.uniform(0, 1, 1) < random_prob
-        if act_randomly:
-            action = random_action
-        else:
-            action = command
+        action = random_action if act_randomly else command
         return {"action": action}
 
 
@@ -335,8 +327,7 @@ class ORBSLAM2Agent(RandomAgent):
         self.position_history.append(
             self.pose6D.detach().cpu().numpy().reshape(1, 4, 4)
         )
-        success = self.is_goal_reached()
-        if success:
+        if success := self.is_goal_reached():
             action = HabitatSimActions.STOP
             self.action_history.append(action)
             return {"action": action}
@@ -437,10 +428,9 @@ class ORBSLAM2Agent(RandomAgent):
             return True
         pp = torch.cat(self.planned2Dpath).detach().cpu().view(-1, 2)
         binary_map = self.map2DObstacles.squeeze().detach() >= self.obstacle_th
-        obstacles_on_path = (
+        return (
             binary_map[pp[:, 0].long(), pp[:, 1].long()]
         ).long().sum().item() > 0
-        return obstacles_on_path  # obstacles_nearby or  obstacles_on_path
 
     def rawmap2_planner_ready(self, rawmap, start_map, goal_map):
         map1 = (rawmap / float(self.obstacle_th)) ** 2
@@ -502,15 +492,14 @@ class ORBSLAM2Agent(RandomAgent):
         )
         if abs(d_angle) < d_angle_rot_th:
             command = HabitatSimActions.MOVE_FORWARD
+        elif (d_angle > 0) and (d_angle < pi):
+            command = HabitatSimActions.TURN_LEFT
+        elif d_angle > pi:
+            command = HabitatSimActions.TURN_RIGHT
+        elif (d_angle < 0) and (d_angle > -pi):
+            command = HabitatSimActions.TURN_RIGHT
         else:
-            if (d_angle > 0) and (d_angle < pi):
-                command = HabitatSimActions.TURN_LEFT
-            elif d_angle > pi:
-                command = HabitatSimActions.TURN_RIGHT
-            elif (d_angle < 0) and (d_angle > -pi):
-                command = HabitatSimActions.TURN_RIGHT
-            else:
-                command = HabitatSimActions.TURN_LEFT
+            command = HabitatSimActions.TURN_LEFT
         return command
 
     def decide_what_to_do(self):

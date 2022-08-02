@@ -34,13 +34,12 @@ class Metric:
             if values[i] is None:
                 continue
 
-            if isinstance(values[i], list) is False:
+            if not isinstance(values[i], list):
                 values[i] = [values[i]]
 
             if self.metrics[i][0] is None:
                 self.metrics[i][0] = np.mean(values[i])
                 self.metrics[i][1] = np.mean(values[i])
-                self.metrics[i][2] = np.mean(values[i])
             else:
                 self.metrics[i][0] = (
                     self.metrics[i][0] * (self.num_iters - 1)
@@ -51,8 +50,7 @@ class Metric:
                     1
                 ] + 0.05 * np.mean(values[i])
 
-                self.metrics[i][2] = np.mean(values[i])
-
+            self.metrics[i][2] = np.mean(values[i])
             self.metrics[i][0] = float(self.metrics[i][0])
             self.metrics[i][1] = float(self.metrics[i][1])
             self.metrics[i][2] = float(self.metrics[i][2])
@@ -63,12 +61,11 @@ class Metric:
 
     def get_stat_string(self, mode: int = 1) -> str:
 
-        stat_string = ""
+        stat_string = (
+            "".join(f"[{k}:{v}]" for k, v in self.info.items())
+            + f"[iters:{self.num_iters}]\n"
+        )
 
-        for k, v in self.info.items():
-            stat_string += "[{}:{}]".format(k, v)
-
-        stat_string += "[iters:{}]\n".format(self.num_iters)
         for i in range(len(self.metric_names)):
             if self.metrics[i][mode] is not None:
                 stat_string += "[{}:{:.3f}]".format(
@@ -79,11 +76,7 @@ class Metric:
         return stat_string
 
     def get_stats(self, mode: int = 1) -> List[float]:
-        stats = []
-        for i in range(len(self.metric_names)):
-            stats.append(self.metrics[i][mode])
-
-        return stats
+        return [self.metrics[i][mode] for i in range(len(self.metric_names))]
 
     def dump_log(self) -> bool:
 

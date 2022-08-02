@@ -137,14 +137,14 @@ class RolloutStorage:
             int((buffer_index + 1) * self._num_envs / self._nbuffers),
         )
 
-        if len(next_step) > 0:
+        if next_step:
             self.buffers.set(
                 (self.current_rollout_step_idxs[buffer_index] + 1, env_slice),
                 next_step,
                 strict=False,
             )
 
-        if len(current_step) > 0:
+        if current_step:
             self.buffers.set(
                 (self.current_rollout_step_idxs[buffer_index], env_slice),
                 current_step,
@@ -193,28 +193,21 @@ class RolloutStorage:
 
     def recurrent_generator(self, advantages, num_mini_batch) -> TensorDict:
         num_environments = advantages.size(1)
-        assert num_environments >= num_mini_batch, (
-            "Trainer requires the number of environments ({}) "
-            "to be greater than or equal to the number of "
-            "trainer mini batches ({}).".format(
-                num_environments, num_mini_batch
-            )
-        )
+        assert (
+            num_environments >= num_mini_batch
+        ), f"Trainer requires the number of environments ({num_environments}) to be greater than or equal to the number of trainer mini batches ({num_mini_batch})."
+
         if num_environments % num_mini_batch != 0:
             warnings.warn(
-                "Number of environments ({}) is not a multiple of the"
-                " number of mini batches ({}).  This results in mini batches"
-                " of different sizes, which can harm training performance.".format(
-                    num_environments, num_mini_batch
-                )
+                f"Number of environments ({num_environments}) is not a multiple of the number of mini batches ({num_mini_batch}).  This results in mini batches of different sizes, which can harm training performance."
             )
+
         for inds in torch.randperm(num_environments).chunk(num_mini_batch):
             batch = self.buffers[0 : self.current_rollout_step_idx, inds]
             batch["advantages"] = advantages[
                 0 : self.current_rollout_step_idx, inds
             ]
-            batch["recurrent_hidden_states"] = batch[
-                "recurrent_hidden_states"
-            ][0:1]
+            batch["recurrent_hidden_states"] = batch["recurrent_hidden_states"][:1]
+
 
             yield batch.map(lambda v: v.flatten(0, 1))

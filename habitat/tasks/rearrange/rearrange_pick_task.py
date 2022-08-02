@@ -130,9 +130,7 @@ class RearrangePickTaskV1(RearrangeTask):
         if self._should_prevent_grip(action_args):
             # No releasing the object once it is held.
             action_args["grip_ac"] = None
-        obs = super().step(action=action, episode=episode)
-
-        return obs
+        return super().step(action=action, episode=episode)
 
     def reset(self, episode: Episode):
         sim = self._sim

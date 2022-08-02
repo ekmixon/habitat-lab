@@ -24,7 +24,7 @@ class TensorboardWriter:
             **kwargs: Additional keyword args for SummaryWriter
         """
         self.writer = None
-        if log_dir is not None and len(log_dir) > 0:
+        if log_dir is not None and log_dir != "":
             self.writer = SummaryWriter(log_dir, *args, **kwargs)
 
     def __getattr__(self, item):

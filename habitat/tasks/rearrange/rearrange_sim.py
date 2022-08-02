@@ -38,9 +38,9 @@ def load_light_setup_for_glb(json_filepath):
     with open(json_filepath) as json_file:
         data = json.load(json_file)
         lighting_setup = []
+        light_w = 1.0
         for light in data["lights"].values():
             t = light["position"]
-            light_w = 1.0
             position = [float(t[0]), float(t[1]), float(t[2]), light_w]
             color_scale = float(light["intensity"])
             color = [float(c * color_scale) for c in light["color"]]
@@ -373,8 +373,6 @@ class RearrangeSim(HabitatSim):
                     self.internal_step(-1)
 
             self._prev_sim_obs = self.get_sensor_observations()
-            obs = self._sensor_suite.get_observations(self._prev_sim_obs)
-
         else:
             self._prev_sim_obs = self.get_sensor_observations_async_start()
 
@@ -383,7 +381,7 @@ class RearrangeSim(HabitatSim):
                     self.internal_step(-1)
 
             self._prev_sim_obs = self.get_sensor_observations_async_finish()
-            obs = self._sensor_suite.get_observations(self._prev_sim_obs)
+        obs = self._sensor_suite.get_observations(self._prev_sim_obs)
 
         if "robot_third_rgb" in obs:
             self.is_render_obs = True
@@ -433,8 +431,7 @@ class RearrangeSim(HabitatSim):
         self.internal_step(-1)
 
         prev_sim_obs = self.get_sensor_observations()
-        obs = self._sensor_suite.get_observations(prev_sim_obs)
-        return obs
+        return self._sensor_suite.get_observations(prev_sim_obs)
 
     def internal_step(self, dt):
         """Never call sim.step_world directly."""

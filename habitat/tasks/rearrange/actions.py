@@ -145,9 +145,7 @@ class ArmRelPosAction(SimulatorTaskAction):
         self._sim.robot.arm_motor_pos = (
             delta_pos + self._sim.robot.arm_motor_pos
         )
-        if should_step:
-            return self._sim.step(HabitatSimActions.ARM_VEL)
-        return None
+        return self._sim.step(HabitatSimActions.ARM_VEL) if should_step else None
 
 
 @registry.register_task_action
@@ -177,9 +175,7 @@ class ArmRelPosKinematicAction(SimulatorTaskAction):
         self._sim.robot.arm_joint_pos = (
             delta_pos + self._sim.robot.arm_joint_pos
         )
-        if should_step:
-            return self._sim.step(HabitatSimActions.ARM_VEL)
-        return None
+        return self._sim.step(HabitatSimActions.ARM_VEL) if should_step else None
 
 
 @registry.register_task_action
@@ -203,10 +199,7 @@ class ArmAbsPosAction(SimulatorTaskAction):
         # go.
         self._sim: RearrangeSim
         self._sim.robot.arm_motor_pos = set_pos
-        if should_step:
-            return self._sim.step(HabitatSimActions.ARM_ABS_POS)
-        else:
-            return None
+        return self._sim.step(HabitatSimActions.ARM_ABS_POS) if should_step else None
 
 
 @registry.register_task_action
@@ -324,10 +317,7 @@ class BaseVelAction(SimulatorTaskAction):
         if lin_vel != 0.0 or ang_vel != 0.0:
             self.update_base()
 
-        if should_step:
-            return self._sim.step(HabitatSimActions.BASE_VELOCITY)
-        else:
-            return None
+        return self._sim.step(HabitatSimActions.BASE_VELOCITY) if should_step else None
 
 
 @registry.register_task_action
@@ -395,7 +385,4 @@ class ArmEEAction(SimulatorTaskAction):
                 global_pos, self._sim.viz_ids["ee_target"]
             )
 
-        if should_step:
-            return self._sim.step(HabitatSimActions.ARM_EE)
-        else:
-            return None
+        return self._sim.step(HabitatSimActions.ARM_EE) if should_step else None

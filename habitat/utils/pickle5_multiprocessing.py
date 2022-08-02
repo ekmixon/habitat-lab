@@ -71,8 +71,4 @@ class ConnectionWrapper:
     def __getattr__(self, name):
         if "conn" in self.__dict__:
             return getattr(self.conn, name)
-        raise AttributeError(
-            "'{}' object has no attribute '{}'".format(
-                type(self).__name__, "conn"
-            )
-        )
+        raise AttributeError(f"'{type(self).__name__}' object has no attribute 'conn'")

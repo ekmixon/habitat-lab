@@ -84,9 +84,7 @@ class PyRobotRGBSensor(RGBSensor):
     def get_observation(self, robot_obs, *args: Any, **kwargs: Any):
         obs = robot_obs.get(self.uuid, None)
 
-        assert obs is not None, "Invalid observation for {} sensor".format(
-            self.uuid
-        )
+        assert obs is not None, f"Invalid observation for {self.uuid} sensor"
 
         obs = _resize_observation(obs, self.observation_space, self.config)
 
@@ -119,9 +117,7 @@ class PyRobotDepthSensor(DepthSensor):
     def get_observation(self, robot_obs, *args: Any, **kwargs: Any):
         obs = robot_obs.get(self.uuid, None)
 
-        assert obs is not None, "Invalid observation for {} sensor".format(
-            self.uuid
-        )
+        assert obs is not None, f"Invalid observation for {self.uuid} sensor"
 
         obs = _resize_observation(obs, self.observation_space, self.config)
 
@@ -175,9 +171,7 @@ class PyRobot(Simulator):
             sensor_cfg = getattr(self._config, sensor_name)
             sensor_type = registry.get_sensor(sensor_cfg.TYPE)
 
-            assert sensor_type is not None, "invalid sensor type {}".format(
-                sensor_cfg.TYPE
-            )
+            assert sensor_type is not None, f"invalid sensor type {sensor_cfg.TYPE}"
             robot_sensors.append(sensor_type(sensor_cfg))
         self._sensor_suite = SensorSuite(robot_sensors)
 
@@ -188,7 +182,8 @@ class PyRobot(Simulator):
 
         assert (
             self._config.ROBOT in self._config.ROBOTS
-        ), "Invalid robot type {}".format(self._config.ROBOT)
+        ), f"Invalid robot type {self._config.ROBOT}"
+
         self._robot_config = getattr(self._config, self._config.ROBOT.upper())
 
         self._action_space = self._robot_action_space(
@@ -219,11 +214,11 @@ class PyRobot(Simulator):
         return self._robot.camera
 
     def _robot_action_space(self, robot_type, robot_config):
-        action_spaces_dict = {}
-        for action in robot_config.ACTIONS:
-            action_spaces_dict[action] = ACTION_SPACES[robot_type.upper()][
-                action
-            ]
+        action_spaces_dict = {
+            action: ACTION_SPACES[robot_type.upper()][action]
+            for action in robot_config.ACTIONS
+        }
+
         return spaces.Dict(action_spaces_dict)
 
     @property
@@ -233,10 +228,9 @@ class PyRobot(Simulator):
     def reset(self):
         self._robot.camera.reset()
 
-        observations = self._sensor_suite.get_observations(
+        return self._sensor_suite.get_observations(
             robot_obs=self.get_robot_observations()
         )
-        return observations
 
     def step(self, action, action_params):
         r"""Step in reality. Currently the supported
@@ -251,13 +245,11 @@ class PyRobot(Simulator):
         elif action in self._robot_config.CAMERA_ACTIONS:
             getattr(self._robot.camera, action)(**action_params)
         else:
-            raise ValueError("Invalid action {}".format(action))
+            raise ValueError(f"Invalid action {action}")
 
-        observations = self._sensor_suite.get_observations(
+        return self._sensor_suite.get_observations(
             robot_obs=self.get_robot_observations()
         )
-
-        return observations
 
     def render(self, mode: str = "rgb") -> Any:
         observations = self._sensor_suite.get_observations(
@@ -265,22 +257,22 @@ class PyRobot(Simulator):
         )
 
         output = observations.get(mode)
-        assert output is not None, "mode {} sensor is not active".format(mode)
+        assert output is not None, f"mode {mode} sensor is not active"
 
         return output
 
     def get_agent_state(
         self, agent_id: int = 0, base_state_type: str = "odom"
     ):
-        assert agent_id == 0, "No support of multi agent in {} yet.".format(
-            self.__class__.__name__
-        )
-        state = {
+        assert (
+            agent_id == 0
+        ), f"No support of multi agent in {self.__class__.__name__} yet."
+
+        # TODO(akadian): add arm state when supported
+        return {
             "base": self._robot.base.get_state(base_state_type),
             "camera": self._robot.camera.get_state(),
         }
-        # TODO(akadian): add arm state when supported
-        return state
 
     def seed(self, seed: int) -> None:
         raise NotImplementedError("No support for seeding in reality")

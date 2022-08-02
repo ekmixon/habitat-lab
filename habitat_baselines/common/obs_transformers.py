@@ -123,13 +123,12 @@ class ResizeShortestEdge(ObservationTransformer):
         self, observations: Dict[str, torch.Tensor]
     ) -> Dict[str, torch.Tensor]:
         if self._size is not None:
-            observations.update(
-                {
-                    sensor: self._transform_obs(observations[sensor])
-                    for sensor in self.trans_keys
-                    if sensor in observations
-                }
-            )
+            observations |= {
+                sensor: self._transform_obs(observations[sensor])
+                for sensor in self.trans_keys
+                if sensor in observations
+            }
+
         return observations
 
     @classmethod
@@ -198,13 +197,12 @@ class CenterCropper(ObservationTransformer):
         self, observations: Dict[str, torch.Tensor]
     ) -> Dict[str, torch.Tensor]:
         if self._size is not None:
-            observations.update(
-                {
-                    sensor: self._transform_obs(observations[sensor])
-                    for sensor in self.trans_keys
-                    if sensor in observations
-                }
-            )
+            observations |= {
+                sensor: self._transform_obs(observations[sensor])
+                for sensor in self.trans_keys
+                if sensor in observations
+            }
+
         return observations
 
     @classmethod
@@ -249,10 +247,7 @@ class CameraProjection(metaclass=abc.ABCMeta):
         self.depth_from = depth_from
 
         # Camera rotation: points in world coord = R @ points in camera coord
-        if R is not None:
-            self.R = R.float()
-        else:
-            self.R = None
+        self.R = R.float() if R is not None else None
 
     @abc.abstractmethod
     def projection(
@@ -282,10 +277,7 @@ class CameraProjection(metaclass=abc.ABCMeta):
     @property
     def rotation(self):
         """Camera rotation: points in world coord = R @ points in camera coord"""
-        if self.R is None:
-            return torch.eye(3, dtype=torch.float32)
-        else:
-            return self.R
+        return torch.eye(3, dtype=torch.float32) if self.R is None else self.R
 
     @property
     def shape(self):
@@ -305,12 +297,11 @@ class CameraProjection(metaclass=abc.ABCMeta):
         """
         if self.R is None:
             return pts
-        else:
-            # Rotate points according to camera rotation
-            _h, _w, _ = pts.shape
-            # points in world coord = R @ points in camera coord
-            rotated_pts = torch.matmul(pts.view((-1, 3)), self.R.T)
-            return rotated_pts.view(_h, _w, 3)
+        # Rotate points according to camera rotation
+        _h, _w, _ = pts.shape
+        # points in world coord = R @ points in camera coord
+        rotated_pts = torch.matmul(pts.view((-1, 3)), self.R.T)
+        return rotated_pts.view(_h, _w, 3)
 
     def worldcoord2camcoord(self, pts: torch.Tensor):
         """Convert points in world coords into points in camera coords.
@@ -321,12 +312,11 @@ class CameraProjection(metaclass=abc.ABCMeta):
         """
         if self.R is None:
             return pts
-        else:
-            # Rotate points according to camera rotation
-            _h, _w, _ = pts.shape
-            # points in camera coord = R.T @ points in world coord
-            rotated_pts = torch.matmul(pts.view((-1, 3)), self.R)
-            return rotated_pts.view(_h, _w, 3)
+        # Rotate points according to camera rotation
+        _h, _w, _ = pts.shape
+        # points in camera coord = R.T @ points in world coord
+        rotated_pts = torch.matmul(pts.view((-1, 3)), self.R)
+        return rotated_pts.view(_h, _w, 3)
 
 
 class PerspectiveProjection(CameraProjection):
@@ -348,10 +338,7 @@ class PerspectiveProjection(CameraProjection):
         super(PerspectiveProjection, self).__init__(
             img_h, img_w, R, _DepthFrom.Z_VAL
         )
-        if f is None:
-            self.f = max(img_h, img_w) / 2
-        else:
-            self.f = f
+        self.f = max(img_h, img_w) / 2 if f is None else f
 
     def projection(
         self, world_pts: torch.Tensor
@@ -537,10 +524,7 @@ class FisheyeProjection(CameraProjection):
         proj_pts = torch.stack([mapx, mapy], dim=-1)
 
         # Check valid area
-        if alpha <= 0.5:
-            w1 = alpha / (1 - alpha)
-        else:
-            w1 = (1 - alpha) / alpha
+        w1 = alpha / (1 - alpha) if alpha <= 0.5 else (1 - alpha) / alpha
         w2 = w1 + xi / np.sqrt(2 * w1 * xi + xi * xi + 1)
         valid_mask = z > -w2 * d1
         valid_mask *= fov_mask
@@ -762,12 +746,7 @@ class ProjectionConverter(nn.Module):
             # All input cameras have depth from optical center
             return None
         else:
-            if not inverse:
-                # for input_models
-                return z_factors
-            else:
-                # for output_models
-                return 1 / z_factors
+            return 1 / z_factors if inverse else z_factors
 
     def forward(
         self, batch: torch.Tensor, is_depth: bool = False

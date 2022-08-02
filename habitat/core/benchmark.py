@@ -32,10 +32,7 @@ class Benchmark:
         config_env = get_config(config_paths)
         self._eval_remote = eval_remote
 
-        if self._eval_remote is True:
-            self._env = None
-        else:
-            self._env = Env(config=config_env)
+        self._env = None if self._eval_remote else Env(config=config_env)
 
     def remote_evaluate(
         self, agent: "Agent", num_episodes: Optional[int] = None
@@ -119,12 +116,10 @@ class Benchmark:
         if num_episodes is None:
             num_episodes = len(self._env.episodes)
         else:
-            assert num_episodes <= len(self._env.episodes), (
-                "num_episodes({}) is larger than number of episodes "
-                "in environment ({})".format(
-                    num_episodes, len(self._env.episodes)
-                )
-            )
+            assert num_episodes <= len(
+                self._env.episodes
+            ), f"num_episodes({num_episodes}) is larger than number of episodes in environment ({len(self._env.episodes)})"
+
 
         assert num_episodes > 0, "num_episodes should be greater than 0"
 
@@ -143,14 +138,12 @@ class Benchmark:
             for m, v in metrics.items():
                 if isinstance(v, dict):
                     for sub_m, sub_v in v.items():
-                        agg_metrics[m + "/" + str(sub_m)] += sub_v
+                        agg_metrics[f"{m}/{str(sub_m)}"] += sub_v
                 else:
                     agg_metrics[m] += v
             count_episodes += 1
 
-        avg_metrics = {k: v / count_episodes for k, v in agg_metrics.items()}
-
-        return avg_metrics
+        return {k: v / count_episodes for k, v in agg_metrics.items()}
 
     def evaluate(
         self, agent: "Agent", num_episodes: Optional[int] = None

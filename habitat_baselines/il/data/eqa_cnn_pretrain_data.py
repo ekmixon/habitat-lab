@@ -36,9 +36,7 @@ class EQACNNPretrainDataset(Dataset):
             logger.info(
                 "Dataset cache not found. Saving rgb, seg, depth scene images"
             )
-            logger.info(
-                "Number of {} episodes: {}".format(mode, len(self.episodes))
-            )
+            logger.info(f"Number of {mode} episodes: {len(self.episodes)}")
 
             self.scene_ids = []
             self.scene_episode_dict = {}
@@ -117,9 +115,9 @@ class EQACNNPretrainDataset(Dataset):
 
             sample_key = "{0:0=6d}".format(self.count)
             with self.lmdb_env.begin(write=True) as txn:
-                txn.put((sample_key + "_rgb").encode(), rgb.tobytes())
-                txn.put((sample_key + "_depth").encode(), depth.tobytes())
-                txn.put((sample_key + "_seg").encode(), seg.tobytes())
+                txn.put(f"{sample_key}_rgb".encode(), rgb.tobytes())
+                txn.put(f"{sample_key}_depth".encode(), depth.tobytes())
+                txn.put(f"{sample_key}_seg".encode(), seg.tobytes())
 
             self.count += 1
 

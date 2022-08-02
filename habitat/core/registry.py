@@ -59,10 +59,7 @@ class Registry(metaclass=Singleton):
             cls.mapping[_type][register_name] = to_register
             return to_register
 
-        if to_register is None:
-            return wrap
-        else:
-            return wrap(to_register)
+        return wrap if to_register is None else wrap(to_register)
 
     @classmethod
     def register_task(cls, to_register=None, *, name: Optional[str] = None):

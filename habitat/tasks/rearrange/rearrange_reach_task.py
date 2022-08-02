@@ -20,9 +20,7 @@ class RearrangeReachTaskV1(RearrangeTask):
         self.cur_dist = 0
 
     def step(self, action, episode):
-        obs = super().step(action=action, episode=episode)
-
-        return obs
+        return super().step(action=action, episode=episode)
 
     def reset(self, episode):
         super().reset(episode)

@@ -171,9 +171,10 @@ class VectorEnv:
 
         self._num_envs = len(env_fn_args)
 
-        assert multiprocessing_start_method in self._valid_start_methods, (
-            "multiprocessing_start_method must be one of {}. Got '{}'"
-        ).format(self._valid_start_methods, multiprocessing_start_method)
+        assert (
+            multiprocessing_start_method in self._valid_start_methods
+        ), f"multiprocessing_start_method must be one of {self._valid_start_methods}. Got '{multiprocessing_start_method}'"
+
         self._auto_reset_done = auto_reset_done
         self._mp_ctx = mp.get_context(multiprocessing_start_method)
         self._workers = []
@@ -343,34 +344,22 @@ class VectorEnv:
     def current_episodes(self):
         for write_fn in self._connection_write_fns:
             write_fn((CALL_COMMAND, (CURRENT_EPISODE_NAME, None)))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def count_episodes(self):
         for write_fn in self._connection_write_fns:
             write_fn((COUNT_EPISODES_COMMAND, None))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def episode_over(self):
         for write_fn in self._connection_write_fns:
             write_fn((CALL_COMMAND, (EPISODE_OVER_NAME, None)))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def get_metrics(self):
         for write_fn in self._connection_write_fns:
             write_fn((CALL_COMMAND, (GET_METRICS_NAME, None)))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def reset(self):
         r"""Reset all the vectorized environments
@@ -379,10 +368,7 @@ class VectorEnv:
         """
         for write_fn in self._connection_write_fns:
             write_fn((RESET_COMMAND, None))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def reset_at(self, index_env: int):
         r"""Reset in the index_env environment in the vector.
@@ -391,8 +377,7 @@ class VectorEnv:
         :return: list containing the output of reset method of indexed env.
         """
         self._connection_write_fns[index_env]((RESET_COMMAND, None))
-        results = [self._connection_read_fns[index_env]()]
-        return results
+        return [self._connection_read_fns[index_env]()]
 
     def async_step_at(
         self, index_env: int, action: Union[int, str, Dict[str, Any]]
@@ -515,8 +500,7 @@ class VectorEnv:
         self._connection_write_fns[index](
             (CALL_COMMAND, (function_name, function_args))
         )
-        result = self._connection_read_fns[index]()
-        return result
+        return self._connection_read_fns[index]()
 
     def call(
         self,
@@ -540,10 +524,7 @@ class VectorEnv:
             self._connection_write_fns, func_args
         ):
             write_fn((CALL_COMMAND, func_args_on))
-        results = []
-        for read_fn in self._connection_read_fns:
-            results.append(read_fn())
-        return results
+        return [read_fn() for read_fn in self._connection_read_fns]
 
     def render(
         self, mode: str = "human", *args, **kwargs
@@ -583,9 +564,7 @@ class VectorEnv:
             elif torch.is_tensor(v) and v.device.type == "cuda":
                 subk = f"{prefix}.{k}" if prefix is not None else k
                 warnings.warn(
-                    "Action with key {} is a CUDA tensor."
-                    "  This will result in a CUDA context in the subproccess worker."
-                    "  Using CPU tensors instead is recommended.".format(subk)
+                    f"Action with key {subk} is a CUDA tensor.  This will result in a CUDA context in the subproccess worker.  Using CPU tensors instead is recommended."
                 )
 
     def __del__(self):

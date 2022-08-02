@@ -49,21 +49,19 @@ class PointNavDatasetV1(Dataset):
         cfg.defrost()
         cfg.CONTENT_SCENES = []
         dataset = cls(cfg)
-        has_individual_scene_files = os.path.exists(
+        if has_individual_scene_files := os.path.exists(
             dataset.content_scenes_path.split("{scene}")[0].format(
                 data_path=dataset_dir
             )
-        )
-        if has_individual_scene_files:
+        ):
             return cls._get_scenes_from_folder(
                 content_scenes_path=dataset.content_scenes_path,
                 dataset_dir=dataset_dir,
             )
-        else:
-            # Load the full dataset, things are not split into separate files
-            cfg.CONTENT_SCENES = [ALL_SCENES_MASK]
-            dataset = cls(cfg)
-            return list(map(cls.scene_from_scene_path, dataset.scene_ids))
+        # Load the full dataset, things are not split into separate files
+        cfg.CONTENT_SCENES = [ALL_SCENES_MASK]
+        dataset = cls(cfg)
+        return list(map(cls.scene_from_scene_path, dataset.scene_ids))
 
     @staticmethod
     def _get_scenes_from_folder(
@@ -76,10 +74,12 @@ class PointNavDatasetV1(Dataset):
         if not os.path.exists(content_dir):
             return scenes
 
-        for filename in os.listdir(content_dir):
-            if filename.endswith(scene_dataset_ext):
-                scene = filename[: -len(scene_dataset_ext)]
-                scenes.append(scene)
+        scenes.extend(
+            filename[: -len(scene_dataset_ext)]
+            for filename in os.listdir(content_dir)
+            if filename.endswith(scene_dataset_ext)
+        )
+
         scenes.sort()
         return scenes
 
@@ -95,12 +95,11 @@ class PointNavDatasetV1(Dataset):
 
         # Read separate file for each scene
         dataset_dir = os.path.dirname(datasetfile_path)
-        has_individual_scene_files = os.path.exists(
+        if has_individual_scene_files := os.path.exists(
             self.content_scenes_path.split("{scene}")[0].format(
                 data_path=dataset_dir
             )
-        )
-        if has_individual_scene_files:
+        ):
             scenes = config.CONTENT_SCENES
             if ALL_SCENES_MASK in scenes:
                 scenes = self._get_scenes_from_folder(

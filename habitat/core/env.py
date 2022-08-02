@@ -153,9 +153,7 @@ class Env:
 
     @episodes.setter
     def episodes(self, episodes: List[Episode]) -> None:
-        assert (
-            len(episodes) > 0
-        ), "Environment doesn't accept empty episodes list."
+        assert episodes, "Environment doesn't accept empty episodes list."
         self._episodes = episodes
 
     @property

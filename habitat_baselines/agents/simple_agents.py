@@ -61,13 +61,12 @@ class RandomForwardAgent(RandomAgent):
     def act(self, observations: Observations) -> Dict[str, Union[int, int64]]:
         if self.is_goal_reached(observations):
             action = HabitatSimActions.STOP
+        elif np.random.uniform(0, 1, 1) < self.FORWARD_PROBABILITY:
+            action = HabitatSimActions.MOVE_FORWARD
         else:
-            if np.random.uniform(0, 1, 1) < self.FORWARD_PROBABILITY:
-                action = HabitatSimActions.MOVE_FORWARD
-            else:
-                action = np.random.choice(
-                    [HabitatSimActions.TURN_LEFT, HabitatSimActions.TURN_RIGHT]
-                )
+            action = np.random.choice(
+                [HabitatSimActions.TURN_LEFT, HabitatSimActions.TURN_RIGHT]
+            )
 
         return {"action": action}
 
@@ -87,13 +86,12 @@ class GoalFollower(RandomAgent):
         return angle
 
     def turn_towards_goal(self, angle_to_goal: ndarray) -> int:
-        if angle_to_goal > pi or (
-            (angle_to_goal < 0) and (angle_to_goal > -pi)
-        ):
-            action = HabitatSimActions.TURN_RIGHT
-        else:
-            action = HabitatSimActions.TURN_LEFT
-        return action
+        return (
+            HabitatSimActions.TURN_RIGHT
+            if angle_to_goal > pi
+            or ((angle_to_goal < 0) and (angle_to_goal > -pi))
+            else HabitatSimActions.TURN_LEFT
+        )
 
     def act(self, observations: Observations) -> Dict[str, int]:
         if self.is_goal_reached(observations):

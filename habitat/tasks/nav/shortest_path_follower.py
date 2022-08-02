@@ -63,10 +63,7 @@ class ShortestPathFollower:
             self._current_scene = self._sim.habitat_config.SCENE
 
     def _get_return_value(self, action) -> Union[int, np.array]:
-        if self._return_one_hot:
-            return action_to_one_hot(action)
-        else:
-            return action
+        return action_to_one_hot(action) if self._return_one_hot else action
 
     def get_next_action(
         self, goal_pos: np.array

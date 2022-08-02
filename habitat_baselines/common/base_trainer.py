@@ -95,17 +95,14 @@ class BaseTrainer:
             ), "Must specify a directory for storing videos on disk"
 
         with TensorboardWriter(
-            self.config.TENSORBOARD_DIR, flush_secs=self.flush_secs
-        ) as writer:
+                self.config.TENSORBOARD_DIR, flush_secs=self.flush_secs
+            ) as writer:
             if os.path.isfile(self.config.EVAL_CKPT_PATH_DIR):
                 # evaluate singe checkpoint
                 proposed_index = get_checkpoint_id(
                     self.config.EVAL_CKPT_PATH_DIR
                 )
-                if proposed_index is not None:
-                    ckpt_idx = proposed_index
-                else:
-                    ckpt_idx = 0
+                ckpt_idx = proposed_index if proposed_index is not None else 0
                 self._eval_checkpoint(
                     self.config.EVAL_CKPT_PATH_DIR,
                     writer,
@@ -167,35 +164,25 @@ class BaseRLTrainer(BaseTrainer):
 
         if config.NUM_UPDATES != -1 and config.TOTAL_NUM_STEPS != -1:
             raise RuntimeError(
-                "NUM_UPDATES and TOTAL_NUM_STEPS are both specified.  One must be -1.\n"
-                " NUM_UPDATES: {} TOTAL_NUM_STEPS: {}".format(
-                    config.NUM_UPDATES, config.TOTAL_NUM_STEPS
-                )
+                f"NUM_UPDATES and TOTAL_NUM_STEPS are both specified.  One must be -1.\n NUM_UPDATES: {config.NUM_UPDATES} TOTAL_NUM_STEPS: {config.TOTAL_NUM_STEPS}"
             )
+
 
         if config.NUM_UPDATES == -1 and config.TOTAL_NUM_STEPS == -1:
             raise RuntimeError(
-                "One of NUM_UPDATES and TOTAL_NUM_STEPS must be specified.\n"
-                " NUM_UPDATES: {} TOTAL_NUM_STEPS: {}".format(
-                    config.NUM_UPDATES, config.TOTAL_NUM_STEPS
-                )
+                f"One of NUM_UPDATES and TOTAL_NUM_STEPS must be specified.\n NUM_UPDATES: {config.NUM_UPDATES} TOTAL_NUM_STEPS: {config.TOTAL_NUM_STEPS}"
             )
+
 
         if config.NUM_CHECKPOINTS != -1 and config.CHECKPOINT_INTERVAL != -1:
             raise RuntimeError(
-                "NUM_CHECKPOINTS and CHECKPOINT_INTERVAL are both specified."
-                "  One must be -1.\n"
-                " NUM_CHECKPOINTS: {} CHECKPOINT_INTERVAL: {}".format(
-                    config.NUM_CHECKPOINTS, config.CHECKPOINT_INTERVAL
-                )
+                f"NUM_CHECKPOINTS and CHECKPOINT_INTERVAL are both specified.  One must be -1.\n NUM_CHECKPOINTS: {config.NUM_CHECKPOINTS} CHECKPOINT_INTERVAL: {config.CHECKPOINT_INTERVAL}"
             )
+
 
         if config.NUM_CHECKPOINTS == -1 and config.CHECKPOINT_INTERVAL == -1:
             raise RuntimeError(
-                "One of NUM_CHECKPOINTS and CHECKPOINT_INTERVAL must be specified"
-                " NUM_CHECKPOINTS: {} CHECKPOINT_INTERVAL: {}".format(
-                    config.NUM_CHECKPOINTS, config.CHECKPOINT_INTERVAL
-                )
+                f"One of NUM_CHECKPOINTS and CHECKPOINT_INTERVAL must be specified NUM_CHECKPOINTS: {config.NUM_CHECKPOINTS} CHECKPOINT_INTERVAL: {config.CHECKPOINT_INTERVAL}"
             )
 
     def percent_done(self) -> float:
@@ -295,7 +282,7 @@ class BaseRLTrainer(BaseTrainer):
         List[List[Any]],
     ]:
         # pausing self.envs with no new episode
-        if len(envs_to_pause) > 0:
+        if envs_to_pause:
             state_index = list(range(envs.num_envs))
             for idx in reversed(envs_to_pause):
                 state_index.pop(idx)

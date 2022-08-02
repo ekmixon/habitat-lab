@@ -146,10 +146,10 @@ class PointGoalSensor(Sensor):
         self._sim = sim
 
         self._goal_format = getattr(config, "GOAL_FORMAT", "CARTESIAN")
-        assert self._goal_format in ["CARTESIAN", "POLAR"]
+        assert self._goal_format in {"CARTESIAN", "POLAR"}
 
         self._dimensionality = getattr(config, "DIMENSIONALITY", 2)
-        assert self._dimensionality in [2, 3]
+        assert self._dimensionality in {2, 3}
 
         super().__init__(config=config)
 
@@ -177,31 +177,32 @@ class PointGoalSensor(Sensor):
             source_rotation.inverse(), direction_vector
         )
 
-        if self._goal_format == "POLAR":
-            if self._dimensionality == 2:
-                rho, phi = cartesian_to_polar(
-                    -direction_vector_agent[2], direction_vector_agent[0]
-                )
-                return np.array([rho, -phi], dtype=np.float32)
-            else:
-                _, phi = cartesian_to_polar(
-                    -direction_vector_agent[2], direction_vector_agent[0]
-                )
-                theta = np.arccos(
-                    direction_vector_agent[1]
-                    / np.linalg.norm(direction_vector_agent)
-                )
-                rho = np.linalg.norm(direction_vector_agent)
-
-                return np.array([rho, -phi, theta], dtype=np.float32)
-        else:
-            if self._dimensionality == 2:
-                return np.array(
+        if self._goal_format != "POLAR":
+            return (
+                np.array(
                     [-direction_vector_agent[2], direction_vector_agent[0]],
                     dtype=np.float32,
                 )
-            else:
-                return direction_vector_agent
+                if self._dimensionality == 2
+                else direction_vector_agent
+            )
+
+        if self._dimensionality == 2:
+            rho, phi = cartesian_to_polar(
+                -direction_vector_agent[2], direction_vector_agent[0]
+            )
+            return np.array([rho, -phi], dtype=np.float32)
+        else:
+            _, phi = cartesian_to_polar(
+                -direction_vector_agent[2], direction_vector_agent[0]
+            )
+            theta = np.arccos(
+                direction_vector_agent[1]
+                / np.linalg.norm(direction_vector_agent)
+            )
+            rho = np.linalg.norm(direction_vector_agent)
+
+            return np.array([rho, -phi, theta], dtype=np.float32)
 
     def get_observation(
         self,
@@ -420,7 +421,7 @@ class EpisodicGPSSensor(Sensor):
         self._sim = sim
 
         self._dimensionality = getattr(config, "DIMENSIONALITY", 2)
-        assert self._dimensionality in [2, 3]
+        assert self._dimensionality in {2, 3}
         super().__init__(config=config)
 
     def _get_uuid(self, *args: Any, **kwargs: Any) -> str:
@@ -727,11 +728,9 @@ class TopDownMap(Measure):
 
     def _draw_point(self, position, point_type):
         t_x, t_y = maps.to_grid(
-            position[2],
-            position[0],
-            self._top_down_map.shape[0:2],
-            sim=self._sim,
+            position[2], position[0], self._top_down_map.shape[:2], sim=self._sim
         )
+
         self._top_down_map[
             t_x - self.point_padding : t_x + self.point_padding + 1,
             t_y - self.point_padding : t_y + self.point_padding + 1,
@@ -794,13 +793,11 @@ class TopDownMap(Measure):
 
                     map_corners = [
                         maps.to_grid(
-                            p[2],
-                            p[0],
-                            self._top_down_map.shape[0:2],
-                            sim=self._sim,
+                            p[2], p[0], self._top_down_map.shape[:2], sim=self._sim
                         )
                         for p in corners
                     ]
+
 
                     maps.draw_path(
                         self._top_down_map,
@@ -822,10 +819,11 @@ class TopDownMap(Measure):
             )
             self._shortest_path_points = [
                 maps.to_grid(
-                    p[2], p[0], self._top_down_map.shape[0:2], sim=self._sim
+                    p[2], p[0], self._top_down_map.shape[:2], sim=self._sim
                 )
                 for p in _shortest_path_points
             ]
+
             maps.draw_path(
                 self._top_down_map,
                 self._shortest_path_points,
@@ -848,9 +846,10 @@ class TopDownMap(Measure):
         a_x, a_y = maps.to_grid(
             agent_position[2],
             agent_position[0],
-            self._top_down_map.shape[0:2],
+            self._top_down_map.shape[:2],
             sim=self._sim,
         )
+
         self._previous_xy_location = (a_y, a_x)
 
         self.update_fog_of_war_mask(np.array([a_x, a_y]))
@@ -897,9 +896,10 @@ class TopDownMap(Measure):
         a_x, a_y = maps.to_grid(
             agent_position[2],
             agent_position[0],
-            self._top_down_map.shape[0:2],
+            self._top_down_map.shape[:2],
             sim=self._sim,
         )
+
         # Don't draw over the source point
         if self._top_down_map[a_x, a_y] != maps.MAP_SOURCE_POINT_INDICATOR:
             color = 10 + min(
@@ -1080,11 +1080,12 @@ class TeleportAction(SimulatorTaskAction):
         if not isinstance(rotation, list):
             rotation = list(rotation)
 
-        if not self._sim.is_navigable(position):
-            return self._sim.get_observations_at()  # type: ignore
-
-        return self._sim.get_observations_at(
-            position=position, rotation=rotation, keep_agent_at_new_pose=True
+        return (
+            self._sim.get_observations_at(
+                position=position, rotation=rotation, keep_agent_at_new_pose=True
+            )
+            if self._sim.is_navigable(position)
+            else self._sim.get_observations_at()
         )
 
     @property

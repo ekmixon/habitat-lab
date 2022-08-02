@@ -36,7 +36,7 @@ def tile_images(images: List[np.ndarray]) -> np.ndarray:
     Returns:
         tiled image (new_height x width x channels)
     """
-    assert len(images) > 0, "empty list of images"
+    assert images, "empty list of images"
     np_images = np.asarray(images)
     n_images, height, width, n_channels = np_images.shape
     new_height = int(np.ceil(np.sqrt(n_images)))
@@ -79,11 +79,8 @@ def try_cv2_import():
     ros_path = os.environ.get("ROS_PATH")
     if ros_path is not None and ros_path in sys.path:
         sys.path.remove(ros_path)
-        import cv2
-
         sys.path.append(ros_path)
-    else:
-        import cv2
+    import cv2
 
     return cv2
 
@@ -91,12 +88,10 @@ def try_cv2_import():
 class Singleton(type):
     _instances: Dict["Singleton", "Singleton"] = {}
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(
-                *args, **kwargs
-            )
-        return cls._instances[cls]
+    def __call__(self, *args, **kwargs):
+        if self not in self._instances:
+            self._instances[self] = super(Singleton, self).__call__(*args, **kwargs)
+        return self._instances[self]
 
 
 def center_crop(obs, new_shape):
@@ -137,11 +132,7 @@ class DatasetFloatJSONEncoder(json.JSONEncoder):
     def iterencode(self, o, _one_shot=False):
 
         markers: Optional[Dict] = {} if self.check_circular else None
-        if self.ensure_ascii:
-            _encoder = encode_basestring_ascii
-        else:
-            _encoder = encode_basestring
-
+        _encoder = encode_basestring_ascii if self.ensure_ascii else encode_basestring
         def floatstr(
             o,
             allow_nan=self.allow_nan,

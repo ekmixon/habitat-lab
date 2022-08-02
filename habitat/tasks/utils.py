@@ -13,27 +13,26 @@ def quaternion_to_rotation(q_r, q_i, q_j, q_k):
     ref: https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
     """
     s = 1  # unit quaternion
-    rotation_mat = np.array(
+    return np.array(
         [
             [
-                1 - 2 * s * (q_j ** 2 + q_k ** 2),
+                1 - 2 * s * (q_j**2 + q_k**2),
                 2 * s * (q_i * q_j - q_k * q_r),
                 2 * s * (q_i * q_k + q_j * q_r),
             ],
             [
                 2 * s * (q_i * q_j + q_k * q_r),
-                1 - 2 * s * (q_i ** 2 + q_k ** 2),
+                1 - 2 * s * (q_i**2 + q_k**2),
                 2 * s * (q_j * q_k - q_i * q_r),
             ],
             [
                 2 * s * (q_i * q_k - q_j * q_r),
                 2 * s * (q_j * q_k + q_i * q_r),
-                1 - 2 * s * (q_i ** 2 + q_j ** 2),
+                1 - 2 * s * (q_i**2 + q_j**2),
             ],
         ],
         dtype=np.float32,
     )
-    return rotation_mat
 
 
 def cartesian_to_polar(x, y):
@@ -44,21 +43,13 @@ def cartesian_to_polar(x, y):
 
 def compute_pixel_coverage(instance_seg, object_id):
     cand_mask = instance_seg == object_id
-    score = cand_mask.sum().astype(np.float64) / cand_mask.size
-    return score
+    return cand_mask.sum().astype(np.float64) / cand_mask.size
 
 
 def get_angle(x, y):
     """
     Gets the angle between two vectors in radians.
     """
-    if np.linalg.norm(x) != 0:
-        x_norm = x / np.linalg.norm(x)
-    else:
-        x_norm = x
-
-    if np.linalg.norm(y) != 0:
-        y_norm = y / np.linalg.norm(y)
-    else:
-        y_norm = y
+    x_norm = x / np.linalg.norm(x) if np.linalg.norm(x) != 0 else x
+    y_norm = y / np.linalg.norm(y) if np.linalg.norm(y) != 0 else y
     return np.arccos(np.clip(np.dot(x_norm, y_norm), -1, 1))

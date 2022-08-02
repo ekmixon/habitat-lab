@@ -144,9 +144,7 @@ if __name__ == "__main__":
             )
         )
         if interactive_control:
-            action = input(
-                "enter action out of {}:\n".format(", ".join(valid_actions))
-            )
+            action = input(f'enter action out of {", ".join(valid_actions)}:\n')
             assert (
                 action in valid_actions
             ), "invalid action {} entered, choose one amongst " + ",".join(
@@ -257,9 +255,7 @@ class NewNavigationTask(NavigationTask):
         super().__init__(config=config, sim=sim, dataset=dataset)
 
     def _check_episode_is_active(self, *args, **kwargs):
-        logger.info(
-            "Current agent position: {}".format(self._sim.get_agent_state())
-        )
+        logger.info(f"Current agent position: {self._sim.get_agent_state()}")
         collision = self._sim.previous_step_collided
         stop_called = not getattr(self, "is_stop_called", False)
         return collision or stop_called
@@ -284,9 +280,7 @@ if __name__ == "__main__":
     while env.episode_over is not True:
         display_sample(obs["rgb"])
         if interactive_control:
-            action = input(
-                "enter action out of {}:\n".format(", ".join(valid_actions))
-            )
+            action = input(f'enter action out of {", ".join(valid_actions)}:\n')
             assert (
                 action in valid_actions
             ), "invalid action {} entered, choose one amongst " + ",".join(

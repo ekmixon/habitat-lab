@@ -20,10 +20,7 @@ from habitat_baselines.motion_planning.robot_target import RobotTarget
 
 
 def get_noop_arm_action(sim):
-    if sim.robot.is_gripper_open:
-        grip_state = 1.0
-    else:
-        grip_state = 0.0
+    grip_state = 1.0 if sim.robot.is_gripper_open else 0.0
     return {
         "action": "ARM_ACTION",
         "action_args": {
@@ -75,7 +72,7 @@ class ParameterizedAgent(habitat.Agent):
 
     def _log(self, txt):
         if self._config.VERBOSE:
-            print("%s: %s" % (str(self), txt))
+            print(f"{str(self)}: {txt}")
 
     def act(self, observations: Observations) -> Dict[str, Any]:
         if self._should_auto_end:
@@ -106,12 +103,12 @@ class AgentComposition(ParameterizedAgent):
         self._last_info[k] = v
 
     def _has_info(self, k):
-        return any([skill._has_info(k) for skill in self.skills])
+        return any(skill._has_info(k) for skill in self.skills)
 
     def get_and_clear_info(self):
         r = {}
         for skill in self.skills:
-            r.update(skill.get_and_clear_info())
+            r |= skill.get_and_clear_info()
         return r
 
     def set_args(self, **kwargs):
@@ -134,8 +131,7 @@ class AgentComposition(ParameterizedAgent):
         if self.should_term(observations):
             return get_noop_arm_action(self._sim)
 
-        action = self.skills[self.cur_skill].act(observations)
-        return action
+        return self.skills[self.cur_skill].act(observations)
 
     def should_term(self, observations):
         if self._is_done_with_skills:
@@ -279,12 +275,7 @@ class ArmTargModule(ParameterizedAgent):
         self._viz_points = []
 
     def _get_gripper_ac(self, plan_ac) -> float:
-        # keep the gripper state as is.
-        if self._sim.robot.is_gripper_open:
-            grip = -1.0
-        else:
-            grip = 1.0
-        return grip
+        return -1.0 if self._sim.robot.is_gripper_open else 1.0
 
     @property
     def adjusted_plan_idx(self) -> bool:
@@ -395,11 +386,7 @@ class SpaManipPick(ArmTargModule):
         self._clean_mp()
 
     def _get_gripper_ac(self, plan_ac):
-        if self.adjusted_plan_idx >= len(self._plan):
-            grip = 1
-        else:
-            grip = -1
-        return grip
+        return 1 if self.adjusted_plan_idx >= len(self._plan) else -1
 
 
 class SpaResetModule(ArmTargModule):
@@ -455,11 +442,7 @@ class SpaResetModule(ArmTargModule):
         self._clean_mp()
 
     def _get_gripper_ac(self, plan_ac):
-        if self._sim.robot.is_gripper_open:
-            grip = -1.0
-        else:
-            grip = 1.0
-        return grip
+        return -1.0 if self._sim.robot.is_gripper_open else 1.0
 
     @property
     def wait_after(self):

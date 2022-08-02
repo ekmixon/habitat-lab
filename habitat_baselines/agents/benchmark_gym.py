@@ -68,12 +68,10 @@ class BenchmarkGym:
         if num_episodes is None:
             num_episodes = len(self._env.episodes)
         else:
-            assert num_episodes <= len(self._env.episodes), (
-                "num_episodes({}) is larger than number of episodes "
-                "in environment ({})".format(
-                    num_episodes, len(self._env.episodes)
-                )
-            )
+            assert num_episodes <= len(
+                self._env.episodes
+            ), f"num_episodes({num_episodes}) is larger than number of episodes in environment ({len(self._env.episodes)})"
+
 
         assert num_episodes > 0, "num_episodes should be greater than 0"
 
@@ -147,7 +145,7 @@ class BenchmarkGym:
             for m, v in metrics.items():
                 if isinstance(v, dict):
                     for sub_m, sub_v in v.items():
-                        agg_metrics[m + "/" + str(sub_m)] += sub_v
+                        agg_metrics[f"{m}/{str(sub_m)}"] += sub_v
                 else:
                     agg_metrics[m] += v
 

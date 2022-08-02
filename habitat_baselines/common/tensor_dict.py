@@ -35,22 +35,14 @@ class TensorDict(Dict[str, Union["TensorDict", torch.Tensor]]):
     def from_tree(cls, tree: DictTree) -> "TensorDict":
         res = cls()
         for k, v in tree.items():
-            if isinstance(v, dict):
-                res[k] = cls.from_tree(v)
-            else:
-                res[k] = torch.as_tensor(v)
-
+            res[k] = cls.from_tree(v) if isinstance(v, dict) else torch.as_tensor(v)
         return res
 
     def to_tree(self) -> DictTree:
-        res: DictTree = dict()
-        for k, v in self.items():
-            if isinstance(v, TensorDict):
-                res[k] = v.to_tree()
-            else:
-                res[k] = v
-
-        return res
+        return {
+            k: v.to_tree() if isinstance(v, TensorDict) else v
+            for k, v in self.items()
+        }
 
     @overload
     def __getitem__(self, index: str) -> Union["TensorDict", torch.Tensor]:
@@ -96,11 +88,7 @@ class TensorDict(Dict[str, Union["TensorDict", torch.Tensor]]):
             super().__setitem__(index, value)
         else:
             if strict and (self.keys() != value.keys()):
-                raise KeyError(
-                    "Keys don't match: Dest={} Source={}".format(
-                        self.keys(), value.keys()
-                    )
-                )
+                raise KeyError(f"Keys don't match: Dest={self.keys()} Source={value.keys()}")
 
             for k in self.keys():
                 if k not in value:

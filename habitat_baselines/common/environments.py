@@ -44,8 +44,7 @@ class RearrangeRLEnv(habitat.RLEnv):
 
     def reset(self):
         self._previous_action = None
-        observations = super().reset()
-        return observations
+        return super().reset()
 
     def step(self, *args, **kwargs):
         self._previous_action = kwargs["action"]
@@ -69,10 +68,7 @@ class RearrangeRLEnv(habitat.RLEnv):
         return self._env.get_metrics()[self._success_measure_name]
 
     def get_done(self, observations):
-        done = False
-        if self._env.episode_over or self._episode_success():
-            done = True
-        return done
+        return bool(self._env.episode_over or self._episode_success())
 
     def get_info(self, observations):
         return self.habitat_env.get_metrics()
@@ -125,10 +121,7 @@ class NavRLEnv(habitat.RLEnv):
         return self._env.get_metrics()[self._success_measure_name]
 
     def get_done(self, observations):
-        done = False
-        if self._env.episode_over or self._episode_success():
-            done = True
-        return done
+        return bool(self._env.episode_over or self._episode_success())
 
     def get_info(self, observations):
         return self.habitat_env.get_metrics()

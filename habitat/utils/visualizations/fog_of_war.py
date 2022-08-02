@@ -32,10 +32,10 @@ def bresenham_supercover_line(pt1, pt2):
     line_pts = [[x, y]]
 
     ddx, ddy = 2 * dx, 2 * dy
+    errorprev = dx
+    error = dx
     if ddx > ddy:
-        errorprev = dx
-        error = dx
-        for _ in range(int(dx)):
+        for _ in range(int(error)):
             x += xstep
             error += ddy
 
@@ -47,15 +47,11 @@ def bresenham_supercover_line(pt1, pt2):
                 elif error + errorprev > ddx:
                     line_pts.append([x - xstep, y])
                 else:
-                    line_pts.append([x - xstep, y])
-                    line_pts.append([x, y - ystep])
-
+                    line_pts.extend(([x - xstep, y], [x, y - ystep]))
             line_pts.append([x, y])
 
             errorprev = error
     else:
-        errorprev = dx
-        error = dx
         for _ in range(int(dy)):
             y += ystep
             error += ddx
@@ -68,9 +64,7 @@ def bresenham_supercover_line(pt1, pt2):
                 elif error + errorprev > ddy:
                     line_pts.append([x, y - ystep])
                 else:
-                    line_pts.append([x - xstep, y])
-                    line_pts.append([x, y - ystep])
-
+                    line_pts.extend(([x - xstep, y], [x, y - ystep]))
             line_pts.append([x, y])
 
             errorprev = error

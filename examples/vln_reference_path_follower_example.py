@@ -80,7 +80,7 @@ def reference_path_example(mode):
                 done = False
                 while not done:
                     best_action = follower.get_next_action(point)
-                    if best_action == None:
+                    if best_action is None:
                         break
                     observations, reward, done, info = env.step(best_action)
                     save_map(observations, info, images)

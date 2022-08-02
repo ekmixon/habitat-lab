@@ -39,7 +39,7 @@ def reference_path_benchmark(config, num_episodes=None):
             for point in env.current_episode.reference_path:
                 while not env.episode_over:
                     best_action = follower.get_next_action(point)
-                    if best_action == None:
+                    if best_action is None:
                         break
                     env.step(best_action)
 
@@ -47,15 +47,14 @@ def reference_path_benchmark(config, num_episodes=None):
                 best_action = follower.get_next_action(
                     env.current_episode.goals[0].position
                 )
-                if best_action == None:
+                if best_action is None:
                     best_action = HabitatSimActions.STOP
                 env.step(best_action)
 
             for m, v in env.get_metrics().items():
                 agg_metrics[m] += v
 
-    avg_metrics = {k: v / num_episodes for k, v in agg_metrics.items()}
-    return avg_metrics
+    return {k: v / num_episodes for k, v in agg_metrics.items()}
 
 
 def main():

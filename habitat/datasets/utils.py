@@ -37,7 +37,7 @@ def tokenize(
     sentence = sentence.lower()
 
     for token in keep:
-        sentence = sentence.replace(token, " " + token)
+        sentence = sentence.replace(token, f" {token}")
 
     for token in remove:
         sentence = sentence.replace(token, "")
@@ -81,29 +81,18 @@ class VocabDict:
         self.itos = self.word_list
         self.num_vocab = len(self.word_list)
 
-        self.UNK_INDEX = (
-            self.word2idx_dict[self.UNK_TOKEN]
-            if self.UNK_TOKEN in self.word2idx_dict
-            else None
-        )
+        self.UNK_INDEX = self.word2idx_dict.get(self.UNK_TOKEN)
 
-        self.PAD_INDEX = (
-            self.word2idx_dict[self.PAD_TOKEN]
-            if self.PAD_TOKEN in self.word2idx_dict
-            else None
-        )
+        self.PAD_INDEX = self.word2idx_dict.get(self.PAD_TOKEN)
 
     def idx2word(self, n_w):
         return self.word_list[n_w]
 
     def token_idx_2_string(self, tokens: Iterable[int]) -> str:
-        q_string = ""
-        for token in tokens:
-            if token != 0:
-                q_string += self.idx2word(token) + " "
-
-        q_string += "?"
-        return q_string
+        return (
+            "".join(f"{self.idx2word(token)} " for token in tokens if token != 0)
+            + "?"
+        )
 
     def __len__(self):
         return len(self.word_list)
@@ -136,11 +125,10 @@ class VocabDict:
         keep=("'s"),
         remove=(",", "?"),
     ) -> List[int]:
-        inds = [
+        return [
             self.word2idx(w)
             for w in tokenize(sentence, regex=regex, keep=keep, remove=remove)
         ]
-        return inds
 
 
 class VocabFromText(VocabDict):
@@ -166,10 +154,9 @@ class VocabFromText(VocabDict):
             tokens = tokenize(sentence, regex=regex, keep=keep, remove=remove)
             token_counter.update(tokens)
 
-        token_list = []
-        for token in token_counter:
-            if token_counter[token] >= min_count:
-                token_list.append(token)
+        token_list = [
+            token for token in token_counter if token_counter[token] >= min_count
+        ]
 
         extras = self.DEFAULT_TOKENS
 

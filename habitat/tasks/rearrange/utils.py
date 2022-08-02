@@ -47,9 +47,7 @@ def coll_name_matches(coll, name):
 def get_match_link(coll, name):
     if name == coll.object_id_a:
         return coll.link_id_a
-    if name == coll.object_id_b:
-        return coll.link_id_b
-    return None
+    return coll.link_id_b if name == coll.object_id_b else None
 
 
 def swap_axes(x):
@@ -122,9 +120,7 @@ def rearrange_collision(
     robot_scene_colls = 0
     robot_scene_matches = [c for c in colls if coll_name_matches(c, robot_id)]
     for match in robot_scene_matches:
-        reg_obj_coll = any(
-            [coll_name_matches(match, obj_id) for obj_id in added_objs]
-        )
+        reg_obj_coll = any(coll_name_matches(match, obj_id) for obj_id in added_objs)
         if reg_obj_coll:
             robot_obj_colls += 1
         else:
@@ -352,8 +348,7 @@ class IkHelper:
             computeForwardKinematics=1,
             physicsClientId=self.pc_id,
         )
-        world_ee = ls[4]
-        return world_ee
+        return ls[4]
 
     def get_joint_limits(self):
         lower = []

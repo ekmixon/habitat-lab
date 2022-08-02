@@ -166,6 +166,7 @@ class Dataset(Generic[T]):
         return EpisodeIterator(self.episodes, *args, **kwargs)
 
     def to_json(self) -> str:
+
         class DatasetJSONEncoder(json.JSONEncoder):
             def default(self, obj):
                 if isinstance(obj, np.ndarray):
@@ -177,8 +178,7 @@ class Dataset(Generic[T]):
                     else obj.__dict__
                 )
 
-        result = DatasetJSONEncoder().encode(self)
-        return result
+        return DatasetJSONEncoder().encode(self)
 
     def from_json(
         self, json_str: str, scenes_dir: Optional[str] = None
@@ -201,10 +201,7 @@ class Dataset(Generic[T]):
         :param filter_fn: function used to filter the episodes.
         :return: the new dataset.
         """
-        new_episodes = []
-        for episode in self.episodes:
-            if filter_fn(episode):
-                new_episodes.append(episode)
+        new_episodes = [episode for episode in self.episodes if filter_fn(episode)]
         new_dataset = copy.copy(self)
         new_dataset.episodes = new_episodes
         return new_dataset
@@ -447,7 +444,7 @@ class EpisodeIterator(Iterator):
 
         if len(grouped_episodes) > 1:
             # Ensure we swap by moving the current group to the end
-            grouped_episodes = grouped_episodes[1:] + grouped_episodes[0:1]
+            grouped_episodes = grouped_episodes[1:] + grouped_episodes[:1]
 
         self._iterator = iter(sum(grouped_episodes, []))
 

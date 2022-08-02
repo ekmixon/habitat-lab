@@ -65,7 +65,7 @@ class Sensor(metaclass=abc.ABCMeta):
     observation_space: Space
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.config = kwargs["config"] if "config" in kwargs else None
+        self.config = kwargs.get("config")
         if hasattr(self.config, "UUID"):
             # We allow any sensor config to override the UUID
             self.uuid = self.config.UUID
@@ -198,7 +198,8 @@ class SensorSuite:
         for sensor in sensors:
             assert (
                 sensor.uuid not in self.sensors
-            ), "'{}' is duplicated sensor uuid".format(sensor.uuid)
+            ), f"'{sensor.uuid}' is duplicated sensor uuid"
+
             self.sensors[sensor.uuid] = sensor
             ordered_spaces[sensor.uuid] = sensor.observation_space
         self.observation_spaces = spaces.Dict(spaces=ordered_spaces)

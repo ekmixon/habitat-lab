@@ -22,9 +22,7 @@ class EmptySpace(Space):
         return None
 
     def contains(self, x):
-        if x is None:
-            return True
-        return False
+        return x is None
 
     def __repr__(self):
         return "EmptySpace()"
@@ -68,16 +66,13 @@ class ActionSpace(gym.spaces.Dict):
             return False
         if x["action"] not in self.spaces:
             return False
-        if not self.spaces[x["action"]].contains(x.get("action_args", None)):
-            return False
-        return True
+        return bool(self.spaces[x["action"]].contains(x.get("action_args", None)))
 
     def __repr__(self):
         return (
             "ActionSpace("
-            + ", ".join([k + ":" + str(s) for k, s in self.spaces.items()])
-            + ")"
-        )
+            + ", ".join([f"{k}:{str(s)}" for k, s in self.spaces.items()])
+        ) + ")"
 
 
 class ListSpace(Space):
@@ -112,10 +107,11 @@ class ListSpace(Space):
         if not isinstance(x, Collection):
             return False
 
-        if not (self.min_seq_length <= len(x) <= self.max_seq_length):
-            return False
-
-        return all(self.space.contains(el) for el in x)
+        return (
+            all(self.space.contains(el) for el in x)
+            if self.min_seq_length <= len(x) <= self.max_seq_length
+            else False
+        )
 
     def __repr__(self):
         return (

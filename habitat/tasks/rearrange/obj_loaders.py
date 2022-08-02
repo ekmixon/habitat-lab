@@ -73,14 +73,11 @@ def load_articulated_objs(name_obj_dat, sim, obj_ids, auto_sleep=True):
     art_obj_ids = []
     for i, (name, obj_dat) in enumerate(name_obj_dat):
         trans = obj_dat[0]
-        obj_type = obj_dat[1]
         motion_type = MotionType.DYNAMIC
-        if obj_type == -2:
-            fixed_base = False
-        else:
-            fixed_base = True
         if len(obj_ids) == 0:
             ao_mgr = sim.get_articulated_object_manager()
+            obj_type = obj_dat[1]
+            fixed_base = obj_type != -2
             ao = ao_mgr.add_articulated_object_from_urdf(name, fixed_base)
         else:
             ao = obj_ids[i]
@@ -92,9 +89,7 @@ def load_articulated_objs(name_obj_dat, sim, obj_ids, auto_sleep=True):
         #    ao.can_sleep = True
         ao.motion_type = motion_type
         art_obj_ids.append(ao)
-    if len(obj_ids) != 0:
-        return obj_ids
-    return art_obj_ids
+    return obj_ids if len(obj_ids) != 0 else art_obj_ids
 
 
 def init_art_objs(idx_and_state, sim):
@@ -126,10 +121,7 @@ def load_objs(name_obj_dat, sim, obj_ids, auto_sleep=True):
     """
     static_obj_ids = []
     for i, (name, obj_dat) in enumerate(name_obj_dat):
-        if len(obj_ids) == 0:
-            obj_id = add_obj(name, sim)
-        else:
-            obj_id = obj_ids[i]
+        obj_id = add_obj(name, sim) if len(obj_ids) == 0 else obj_ids[i]
         trans = obj_dat[0]
         obj_type = obj_dat[1]
 
@@ -139,6 +131,4 @@ def load_objs(name_obj_dat, sim, obj_ids, auto_sleep=True):
         sim.set_angular_velocity(mn.Vector3(0, 0, 0), obj_id)
         sim.set_object_motion_type(MotionType(obj_type), obj_id)
         static_obj_ids.append(obj_id)
-    if len(obj_ids) != 0:
-        return obj_ids
-    return static_obj_ids
+    return obj_ids if len(obj_ids) != 0 else static_obj_ids

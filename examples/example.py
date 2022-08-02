@@ -11,10 +11,10 @@ def example():
     # Note: Use with for the example testing, doesn't need to be like this on the README
 
     with habitat.Env(
-        config=habitat.get_config(
-            "configs/tasks/rearrangepick_replica_cad.yaml"
-        )
-    ) as env:
+            config=habitat.get_config(
+                "configs/tasks/rearrangepick_replica_cad.yaml"
+            )
+        ) as env:
         print("Environment creation successful")
         observations = env.reset()  # noqa: F841
 
@@ -23,7 +23,7 @@ def example():
         while not env.episode_over:
             observations = env.step(env.action_space.sample())  # noqa: F841
             count_steps += 1
-        print("Episode finished after {} steps.".format(count_steps))
+        print(f"Episode finished after {count_steps} steps.")
 
 
 if __name__ == "__main__":

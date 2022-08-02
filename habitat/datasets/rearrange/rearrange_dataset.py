@@ -40,8 +40,7 @@ class RearrangeDatasetV0(PointNavDatasetV1):
     content_scenes_path: str = "{data_path}/content/{scene}.json.gz"
 
     def to_json(self) -> str:
-        result = DatasetFloatJSONEncoder().encode(self)
-        return result
+        return DatasetFloatJSONEncoder().encode(self)
 
     def __init__(self, config: Optional[Config] = None) -> None:
         self.config = config

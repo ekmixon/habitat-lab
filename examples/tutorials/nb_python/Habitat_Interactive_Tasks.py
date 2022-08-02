@@ -148,7 +148,7 @@ def make_video_cv2(
     videodims = (videodims[1], videodims[0])  # flip to w,h order
     print(videodims)
     video_file = output_path + prefix + ".mp4"
-    print("Encoding the video: %s " % video_file)
+    print(f"Encoding the video: {video_file} ")
     writer = vut.get_fast_video_writer(video_file, fps=fps)
     for ob in observations:
         # If in RGB/RGBA format, remove the alpha channel
@@ -174,7 +174,7 @@ def make_video_cv2(
 
 def simulate(sim, dt=1.0, get_frames=True):
     # simulate dt seconds at 60Hz to the nearest fixed timestep
-    print("Simulating " + str(dt) + " world seconds.")
+    print(f"Simulating {str(dt)} world seconds.")
     observations = []
     start_time = sim.get_world_time()
     while sim.get_world_time() < start_time + dt:
@@ -257,17 +257,13 @@ def make_cfg(settings):
     sim_cfg.enable_physics = settings["enable_physics"]
     sim_cfg.physics_config_file = settings["physics_config_file"]
 
-    # Note: all sensors must have the same resolution
-    sensor_specs = []
-
     rgb_sensor_spec = habitat_sim.CameraSensorSpec()
     rgb_sensor_spec.uuid = "rgb"
     rgb_sensor_spec.sensor_type = habitat_sim.SensorType.COLOR
     rgb_sensor_spec.resolution = [settings["height"], settings["width"]]
     rgb_sensor_spec.position = [0.0, settings["sensor_height"], 0.0]
     rgb_sensor_spec.sensor_subtype = habitat_sim.SensorSubType.PINHOLE
-    sensor_specs.append(rgb_sensor_spec)
-
+    sensor_specs = [rgb_sensor_spec]
     depth_sensor_spec = habitat_sim.CameraSensorSpec()
     depth_sensor_spec.uuid = "depth"
     depth_sensor_spec.sensor_type = habitat_sim.SensorType.DEPTH
@@ -457,14 +453,13 @@ def get_rotation(sim, object_id):
 
 
 def init_episode_dict(episode_id, scene_id, agent_pos, agent_rot):
-    episode_dict = {
+    return {
         "episode_id": episode_id,
         "scene_id": "data/scene_datasets/coda/coda.glb",
         "start_position": agent_pos,
         "start_rotation": agent_rot,
         "info": {},
     }
-    return episode_dict
 
 
 def add_object_details(sim, episode_dict, obj_id, object_template, object_id):
@@ -529,10 +524,9 @@ with habitat_sim.Simulator(cfg) as sim:
         json.dump(episodes, f)
 
     print(
-        "Dataset written to {}".format(
-            os.path.join(dataset_content_path, "train.json.gz")
-        )
+        f'Dataset written to {os.path.join(dataset_content_path, "train.json.gz")}'
     )
+
 
 
 # %%
@@ -604,8 +598,7 @@ class RearrangementDatasetV0(PointNavDatasetV1):
     content_scenes_path: str = "{data_path}/content/{scene}.json.gz"
 
     def to_json(self) -> str:
-        result = DatasetFloatJSONEncoder().encode(self)
-        return result
+        return DatasetFloatJSONEncoder().encode(self)
 
     def __init__(self, config: Optional[Config] = None) -> None:
         super().__init__(config)
@@ -1017,8 +1010,7 @@ class RearrangementSim(HabitatSim):
         self._prev_sim_obs["collided"] = collided
         self._prev_sim_obs["gripped_object_id"] = gripped_object_id
 
-        observations = self._sensor_suite.get_observations(self._prev_sim_obs)
-        return observations
+        return self._sensor_suite.get_observations(self._prev_sim_obs)
 
 
 # %% [markdown]
@@ -1077,10 +1069,9 @@ class GrippedObjectSensor(Sensor):
         *args: Any,
         **kwargs: Any,
     ):
-        obj_id = self._sim.sim_object_to_objid_mapping.get(
+        return self._sim.sim_object_to_objid_mapping.get(
             self._sim.gripped_object_id, -1
         )
-        return obj_id
 
 
 @registry.register_sensor
@@ -1106,10 +1097,9 @@ class ObjectPosition(PointGoalSensor):
 
         object_id = self._sim.get_existing_object_ids()[0]
         object_position = self._sim.get_translation(object_id)
-        pointgoal = self._compute_pointgoal(
+        return self._compute_pointgoal(
             agent_position, rotation_world_agent, object_position
         )
-        return pointgoal
 
 
 @registry.register_sensor
@@ -1135,10 +1125,9 @@ class ObjectGoal(PointGoalSensor):
 
         goal_position = np.array(episode.goals.position, dtype=np.float32)
 
-        point_goal = self._compute_pointgoal(
+        return self._compute_pointgoal(
             agent_position, rotation_world_agent, goal_position
         )
-        return point_goal
 
 
 @registry.register_measure
@@ -1322,11 +1311,7 @@ config.freeze()
 
 def print_info(obs, metrics):
     print(
-        "Gripped Object: {}, Distance To Object: {}, Distance To Goal: {}".format(
-            obs["gripped_object_id"],
-            metrics["agent_to_object_distance"],
-            metrics["object_to_goal_distance"],
-        )
+        f'Gripped Object: {obs["gripped_object_id"]}, Distance To Object: {metrics["agent_to_object_distance"]}, Distance To Goal: {metrics["object_to_goal_distance"]}'
     )
 
 
@@ -1526,12 +1511,10 @@ class RearrangementRLEnv(NavRLEnv):
     def _episode_success(self, observations):
         r"""Returns True if object is within distance threshold of the goal."""
         dist = self._env.get_metrics()["object_to_goal_distance"]
-        if (
-            abs(dist) > self._success_distance
-            or observations["gripped_object_id"] != -1
-        ):
-            return False
-        return True
+        return (
+            abs(dist) <= self._success_distance
+            and observations["gripped_object_id"] == -1
+        )
 
     def _gripped_success(self, observations):
         if (
@@ -1544,17 +1527,17 @@ class RearrangementRLEnv(NavRLEnv):
         return False
 
     def get_done(self, observations):
-        done = False
         action_name = self._env.task.get_action_name(
             self._previous_action["action"]
         )
-        if self._env.episode_over or (
-            self._episode_success(observations)
-            and self._prev_measure["gripped_object_id"] == -1
-            and action_name == "STOP"
-        ):
-            done = True
-        return done
+        return bool(
+            self._env.episode_over
+            or (
+                self._episode_success(observations)
+                and self._prev_measure["gripped_object_id"] == -1
+                and action_name == "STOP"
+            )
+        )
 
     def get_info(self, observations):
         info = self.habitat_env.get_metrics()
@@ -1645,12 +1628,11 @@ def construct_envs(
         proc_config.freeze()
         configs.append(proc_config)
 
-    envs = habitat.ThreadedVectorEnv(
+    return habitat.ThreadedVectorEnv(
         make_env_fn=make_env_fn,
         env_fn_args=tuple(zip(configs, env_classes)),
         workers_ignore_signals=workers_ignore_signals,
     )
-    return envs
 
 
 class RearrangementBaselinePolicy(Policy):
@@ -1662,7 +1644,7 @@ class RearrangementBaselinePolicy(Policy):
             action_space.n,
         )
 
-    def from_config(cls, config, envs):
+    def from_config(self, config, envs):
         pass
 
 

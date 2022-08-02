@@ -203,10 +203,7 @@ def get_wrapped_prop(venv, prop):
 
 
 def play_env(env, args, config):
-    render_steps_limit = None
-    if args.no_render:
-        render_steps_limit = DEFAULT_RENDER_STEPS_LIMIT
-
+    render_steps_limit = DEFAULT_RENDER_STEPS_LIMIT if args.no_render else None
     use_arm_actions = None
     if args.load_actions is not None:
         with open(args.load_actions, "rb") as f:
@@ -229,9 +226,7 @@ def play_env(env, args, config):
     total_reward = 0
     all_arm_actions = []
 
-    while True:
-        if render_steps_limit is not None and i > render_steps_limit:
-            break
+    while not (render_steps_limit is not None and i > render_steps_limit):
         step_result, arm_action = get_input_vel_ctlr(
             args.no_render,
             use_arm_actions[i] if use_arm_actions is not None else None,

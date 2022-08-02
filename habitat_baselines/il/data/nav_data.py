@@ -93,9 +93,10 @@ class NavDataset(wds.Dataset):
 
         group_by_keys = filters.Curried(self.group_by_keys_)
         super().__init__(
-            urls=self.frame_dataset_path + ".tar",
+            urls=f"{self.frame_dataset_path}.tar",
             initial_pipeline=[group_by_keys()],
         )
+
 
         if not self.cache_exists():
             """
@@ -107,11 +108,7 @@ class NavDataset(wds.Dataset):
                 \n[ Saving episode frames to disk. ]"
             )
 
-            logger.info(
-                "Number of {} episodes: {}".format(
-                    self.mode, len(self.episodes)
-                )
-            )
+            logger.info(f"Number of {self.mode} episodes: {len(self.episodes)}")
             ctr = 0
             for scene in tqdm(
                 list(self.scene_episode_dict.keys()),
@@ -128,10 +125,7 @@ class NavDataset(wds.Dataset):
 
             logger.info("[ Saved all episodes' frames to disk. ]")
 
-            create_tar_archive(
-                self.frame_dataset_path + ".tar",
-                self.frame_dataset_path,
-            )
+            create_tar_archive(f"{self.frame_dataset_path}.tar", self.frame_dataset_path)
 
             logger.info("[ Tar archive created. ]")
             logger.info(
@@ -207,8 +201,9 @@ class NavDataset(wds.Dataset):
         # starting navigation
 
         backtrack_controller_steps = actions[
-            0 : action_length - backtrack_steps + 1 :  # noqa: E203
+            : action_length - backtrack_steps + 1
         ][::-1]
+
         counter = 0
 
         if len(backtrack_controller_steps) > 0:
@@ -223,10 +218,7 @@ class NavDataset(wds.Dataset):
 
         target_pos_idx = action_length - backtrack_steps
 
-        controller_step = True
-        if target_pos_idx in pq_idx:
-            controller_step = False
-
+        controller_step = target_pos_idx not in pq_idx
         pq_idx_pruned = [v for v in pq_idx if v <= target_pos_idx]
         pa_pruned = pa[: len(pq_idx_pruned) + 1]
         raw_img_feats = (
@@ -279,9 +271,7 @@ class NavDataset(wds.Dataset):
 
             # padding actions with 0
             diff = self.max_action_len - ep.action_length
-            for _ in range(diff):
-                ep.actions.append(0)
-
+            ep.actions.extend(0 for _ in range(diff))
             ep.actions = torch.Tensor(ep.actions)
             ep.planner_actions = ep.actions.clone().fill_(0)
             ep.controller_actions = ep.actions.clone().fill_(-1)
@@ -399,17 +389,14 @@ class NavDataset(wds.Dataset):
             img = observation["rgb"]
             idx = "{0:0=3d}".format(idx)
             episode_id = "{0:0=4d}".format(int(episode_id))
-            new_path = os.path.join(
-                self.frame_dataset_path, "{}.{}".format(episode_id, idx)
-            )
-            cv2.imwrite(new_path + ".jpg", img[..., ::-1])
+            new_path = os.path.join(self.frame_dataset_path, f"{episode_id}.{idx}")
+            cv2.imwrite(f"{new_path}.jpg", img[..., ::-1])
 
     def cache_exists(self) -> bool:
-        if os.path.exists(self.frame_dataset_path + ".tar"):
+        if os.path.exists(f"{self.frame_dataset_path}.tar"):
             return True
-        else:
-            os.makedirs(self.frame_dataset_path, exist_ok=True)
-            return False
+        os.makedirs(self.frame_dataset_path, exist_ok=True)
+        return False
 
     def load_scene(self, scene: str) -> None:
         self.config.defrost()
@@ -445,7 +432,7 @@ class NavDataset(wds.Dataset):
             action_length = self.episodes[idx].action_length
             scene = self.episodes[idx].scene_id
             if scene != self.config.SIMULATOR.SCENE:
-                logger.info("[ Loading scene - {}]".format(scene))
+                logger.info(f"[ Loading scene - {scene}]")
                 self.config.defrost()
                 self.config.SIMULATOR.SCENE = scene
                 self.config.freeze()

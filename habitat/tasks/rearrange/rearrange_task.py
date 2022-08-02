@@ -50,10 +50,7 @@ class RearrangeTask(NavigationTask):
     def reset(self, episode: Episode):
         super_reset = True
         self._ignore_collisions = []
-        if super_reset:
-            observations = super().reset(episode)
-        else:
-            observations = None
+        observations = super().reset(episode) if super_reset else None
         self.prev_measures = self.measurements.get_metrics()
         self.prev_picked = False
         self.n_succ_picks = 0
@@ -104,8 +101,8 @@ class RearrangeTask(NavigationTask):
             ]
 
             max_force = 0
-            if len(match_contacts) > 0:
-                max_force = max([abs(x.normal_force) for x in match_contacts])
+            if match_contacts:
+                max_force = max(abs(x.normal_force) for x in match_contacts)
 
             return max_force
 
@@ -117,7 +114,7 @@ class RearrangeTask(NavigationTask):
                 and x.object_id_b not in self._ignore_collisions
             )
         ]
-        max_force = max(forces) if len(forces) > 0 else 0
+        max_force = max(forces) if forces else 0
 
         max_obj_force = get_max_force(contact_points, snapped_obj)
         max_robot_force = get_max_force(contact_points, robot_id)

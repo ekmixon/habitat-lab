@@ -131,10 +131,7 @@ def images_to_video(
         **kwargs,
     )
     logger.info(f"Video created: {os.path.join(output_dir, video_name)}")
-    if verbose:
-        images_iter = tqdm.tqdm(images)
-    else:
-        images_iter = images
+    images_iter = tqdm.tqdm(images) if verbose else images
     for im in images_iter:
         writer.append_data(im)
     writer.close()
@@ -232,15 +229,14 @@ def observations_to_image(observation: Dict, info: Dict) -> np.ndarray:
 
         render_obs_images.append(rgb)
 
-    assert (
-        len(render_obs_images) > 0
-    ), "Expected at least one visual sensor enabled."
+    assert render_obs_images, "Expected at least one visual sensor enabled."
 
-    shapes_are_equal = len(set(x.shape for x in render_obs_images)) == 1
-    if not shapes_are_equal:
-        render_frame = tile_images(render_obs_images)
-    else:
-        render_frame = np.concatenate(render_obs_images, axis=1)
+    shapes_are_equal = len({x.shape for x in render_obs_images}) == 1
+    render_frame = (
+        np.concatenate(render_obs_images, axis=1)
+        if shapes_are_equal
+        else tile_images(render_obs_images)
+    )
 
     # draw collision
     if "collisions" in info and info["collisions"]["is_collision"]:
@@ -274,10 +270,10 @@ def append_text_to_image(image: np.ndarray, text: str):
     wrapped_text = textwrap.wrap(text, width=int(w / char_size[0]))
 
     y = 0
+    x = 10
     for line in wrapped_text:
         textsize = cv2.getTextSize(line, font, font_size, font_thickness)[0]
         y += textsize[1] + 10
-        x = 10
         cv2.putText(
             blank_image,
             line,
@@ -289,5 +285,4 @@ def append_text_to_image(image: np.ndarray, text: str):
             lineType=cv2.LINE_AA,
         )
     text_image = blank_image[0 : y + 10, 0:w]
-    final = np.concatenate((image, text_image), axis=0)
-    return final
+    return np.concatenate((image, text_image), axis=0)

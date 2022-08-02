@@ -64,9 +64,7 @@ class AbsObjectGoalPositionSensor(MultiObjSensor):
         self._sim: RearrangeSim
         idxs, _ = self._sim.get_targets()
         scene_pos = self._sim.get_scene_pos()
-        pos = scene_pos[idxs]
-
-        return pos
+        return scene_pos[idxs]
 
 
 @registry.register_sensor
@@ -128,8 +126,7 @@ class AbsTargetStartSensor(MultiObjSensor):
         )
 
     def get_observation(self, observations, episode, *args, **kwargs):
-        pos = self._sim.get_target_objs_start()
-        return pos
+        return self._sim.get_target_objs_start()
 
 
 @registry.register_sensor
@@ -380,7 +377,7 @@ class ObjectToGoalDistance(Measure):
         scene_pos = self._sim.get_scene_pos()
         target_pos = scene_pos[idxs]
         distances = np.linalg.norm(target_pos - goal_pos, ord=2, axis=-1)
-        self._metric = {idx: dist for idx, dist in zip(idxs, distances)}
+        self._metric = dict(zip(idxs, distances))
 
 
 @registry.register_measure
@@ -408,7 +405,7 @@ class EndEffectorToObjectDistance(Measure):
 
         distances = np.linalg.norm(target_pos - ee_pos, ord=2, axis=-1)
 
-        self._metric = {idx: dist for idx, dist in zip(idxs, distances)}
+        self._metric = dict(zip(idxs, distances))
 
 
 @registry.register_measure
@@ -574,10 +571,7 @@ class RearrangeReachReward(Measure):
             EndEffectorToRestDistance.cls_uuid
         ].get_metric()
         if self._config.DIFF_REWARD:
-            if self._prev is None:
-                self._metric = 0.0
-            else:
-                self._metric = self._prev - cur_dist
+            self._metric = 0.0 if self._prev is None else self._prev - cur_dist
         else:
             self._metric = -1.0 * self._config.SCALE * cur_dist
 

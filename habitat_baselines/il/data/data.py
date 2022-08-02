@@ -68,9 +68,10 @@ class EQADataset(wds.Dataset):
 
             group_by_keys = filters.Curried(self.group_by_keys_)
             super().__init__(
-                urls=self.frame_dataset_path + ".tar",
+                urls=f"{self.frame_dataset_path}.tar",
                 initial_pipeline=[group_by_keys()],
             )
+
 
             self.only_vqa_task = config.ONLY_VQA_TASK
 
@@ -86,11 +87,7 @@ class EQADataset(wds.Dataset):
                     \n[ Saving episode frames to disk. ]"
                 )
 
-                logger.info(
-                    "Number of {} episodes: {}".format(
-                        self.mode, len(self.episodes)
-                    )
-                )
+                logger.info(f"Number of {self.mode} episodes: {len(self.episodes)}")
 
                 for scene in tqdm(
                     list(self.scene_episode_dict.keys()),
@@ -114,10 +111,7 @@ class EQADataset(wds.Dataset):
 
                 logger.info("[ Saved all episodes' frames to disk. ]")
 
-                create_tar_archive(
-                    self.frame_dataset_path + ".tar",
-                    self.frame_dataset_path,
-                )
+                create_tar_archive(f"{self.frame_dataset_path}.tar", self.frame_dataset_path)
 
                 logger.info("[ Tar archive created. ]")
                 logger.info(
@@ -221,10 +215,8 @@ class EQADataset(wds.Dataset):
             img = observation["rgb"]
             idx = "{0:0=3d}".format(idx)
             episode_id = "{0:0=4d}".format(int(episode_id))
-            new_path = os.path.join(
-                self.frame_dataset_path, "{}.{}".format(episode_id, idx)
-            )
-            cv2.imwrite(new_path + ".jpg", img[..., ::-1])
+            new_path = os.path.join(self.frame_dataset_path, f"{episode_id}.{idx}")
+            cv2.imwrite(f"{new_path}.jpg", img[..., ::-1])
 
     def get_frames(self, frames_path, num=0):
         r"""Fetches frames from disk."""
@@ -238,11 +230,10 @@ class EQADataset(wds.Dataset):
         return np.array(frames, dtype=np.float32)
 
     def cache_exists(self) -> bool:
-        if os.path.exists(self.frame_dataset_path + ".tar"):
+        if os.path.exists(f"{self.frame_dataset_path}.tar"):
             return True
-        else:
-            os.makedirs(self.frame_dataset_path, exist_ok=True)
-            return False
+        os.makedirs(self.frame_dataset_path, exist_ok=True)
+        return False
 
     def load_scene(self, scene) -> None:
         self.config.defrost()
